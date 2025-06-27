@@ -1,0 +1,4 @@
+1. 解压./data/data.zip
+2. python preprocess.py
+3. python pretrain_rl_model.py
+4. python train.py

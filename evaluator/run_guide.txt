@@ -1,0 +1,8 @@
+1. 将bot代码放在bots/目录下，注意注释掉长时运行（`print('>>>BOTZONE_REQUEST_KEEP_RUNNING<<<')`）语句，并且加载模型时添加`weights_only`参数。
+2. 在test_bot_list.txt中指定要参与评估的bot
+3. 运行evaluator，示例：
+```
+python -m mahjong_simulator.run_evaluation round_robin \
+    --bot_list_file test_bot_list.txt \
+    --num_games 50
+```

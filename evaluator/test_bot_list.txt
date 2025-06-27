@@ -1,0 +1,4 @@
+name=TestBot1,path=bots/test_bot_1
+name=TestBot2,path=bots/test_bot_2
+name=TestBot3,path=bots/test_bot_3
+name=TestBot4,path=bots/test_bot_4
