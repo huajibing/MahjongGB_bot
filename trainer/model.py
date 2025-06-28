@@ -61,8 +61,8 @@ class CNNModel(nn.Module):
             nn.Conv2d(static_channels, 128, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
-            ResidualBlock(128, 128),
-            ResidualBlock(128, 128),
+            ResidualBlock(128, 256),
+            ResidualBlock(256, 128),
             nn.Conv2d(128, 64, kernel_size=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True)
