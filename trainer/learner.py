@@ -1,14 +1,10 @@
-# learner.py
-
 from multiprocessing import Process
 import time
 import numpy as np
 import torch
 from torch.nn import functional as F
 import os
-# --- START OF MODIFICATION ---
 from torch.utils.tensorboard import SummaryWriter
-# --- END OF MODIFICATION ---
 
 from replay_buffer import ReplayBuffer
 from model_pool import ModelPoolServer
