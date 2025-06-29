@@ -15,7 +15,7 @@ if __name__ == '__main__':
         'model_pool_size': 20,
         'model_pool_name': 'model-pool',
         'num_actors': 12,
-        'episodes_per_actor': 100,
+        'episodes_per_actor': 2000,
         'gamma': 0.98,
         'lambda': 0.95,
         'min_sample': 200,
