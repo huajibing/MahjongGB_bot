@@ -520,9 +520,9 @@ def run_game(agent_paths: List[str],
                 gs.end_game(error_message=err_msg)
             if gs.game_over:
                 break
-            if gs.turn_number >= 80 and not gs.game_over:
-                logger.info("Turn limit (80) reached.")
-                print("Turn limit (80) reached.", flush=True)
+            if gs.turn_number >= 180 and not gs.game_over:
+                logger.info("Turn limit (180) reached.")
+                print("Turn limit (180) reached.", flush=True)
                 gs.end_game(is_draw=True, error_message="Turn limit reached")
         logger.info("--- Main Game Loop Ended ---")
         print("\n--- Main Game Loop Ended ---", flush=True)
