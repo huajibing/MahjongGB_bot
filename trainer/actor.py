@@ -1,6 +1,7 @@
 from multiprocessing import Process
 import numpy as np
 import torch
+from collections import deque
 
 from replay_buffer import ReplayBuffer
 from model_pool import ModelPoolClient
@@ -10,11 +11,12 @@ from model import CNNModel
 
 class Actor(Process):
 
-    def __init__(self, config, replay_buffer):
+    def __init__(self, config, replay_buffer, metrics_queue):
         super(Actor, self).__init__()
         self.replay_buffer = replay_buffer
         self.config = config
         self.name = config.get('name', 'Actor-?')
+        self.metrics_queue = metrics_queue
 
     def run(self):
         torch.set_num_threads(1)
@@ -32,7 +34,9 @@ class Actor(Process):
 
         # collect data
         env = MahjongGBEnv(config = {'agent_clz': FeatureAgent})
-        policies = {player : model for player in env.agent_names} # all four players use the latest model
+        policies = {player : model for player in env.agent_names}
+
+        recent_episode_rewards = deque(maxlen=100)
 
         for episode in range(self.config['episodes_per_actor']):
             # update model
@@ -65,7 +69,7 @@ class Actor(Process):
                     agent_data['state']['action_mask'].append(state['action_mask'])
                     state['observation'] = torch.tensor(state['observation'], dtype = torch.float).unsqueeze(0)
                     state['action_mask'] = torch.tensor(state['action_mask'], dtype = torch.float).unsqueeze(0)
-                    model.train(False) # Batch Norm inference mode
+                    model.train(False)
                     with torch.no_grad():
                         logits, value = model(state)
                         action_dist = torch.distributions.Categorical(logits = logits)
@@ -79,18 +83,28 @@ class Actor(Process):
                 next_obs, rewards, done = env.step(actions)
                 
                 for agent_name in obs:
-                    if agent_name in rewards: # Sanity check
+                    if agent_name in rewards:
                         episode_data[agent_name]['reward'].append(rewards[agent_name])
 
                 obs = next_obs
-            print(self.name, 'Episode', episode, 'Model', latest['id'], 'Reward', rewards)
+            
+            episode_reward = rewards.get('player_1', 0)
+            recent_episode_rewards.append(episode_reward)
+            avg_reward = sum(recent_episode_rewards) / len(recent_episode_rewards)
+            
+            print(f"{self.name} | Episode: {episode}, Model: {latest['id']}, "
+                  f"Episode Reward(P1): {episode_reward:.2f}, "
+                  f"Avg Reward(100 episodes): {avg_reward:.2f}")
 
-            # postprocessing episode data for each agent
+            try:
+                self.metrics_queue.put(episode_reward, block=False)
+            except:
+                pass
+
             for agent_name, agent_data in episode_data.items():
                 if len(agent_data['action']) < len(agent_data['reward']):
                     agent_data['reward'].pop(0)
                 
-                # If an agent never took an action, its lists will be empty. Skip it.
                 if not agent_data['action']:
                     continue
 
@@ -115,7 +129,6 @@ class Actor(Process):
                 advs.reverse()
                 advantages = np.array(advs, dtype = np.float32)
 
-                # send samples to replay_buffer (per agent)
                 if rewards_arr[-1] != 0:
                     self.replay_buffer.push({
                         'state': {
